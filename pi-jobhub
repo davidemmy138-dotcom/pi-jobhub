@@ -1,0 +1,17 @@
+# 1. Initialize git
+git init
+
+# 2. Add all files
+git add .
+
+# 3. Commit your files
+git commit -m "Initial commit for Pi JobHub with validation file"
+
+# 4. Rename branch to main
+git branch -M main
+
+# 5. Add your GitHub repo as remote
+git remote add origin https://github.com/your-username/pi-jobhub.git
+
+# 6. Push everything to GitHub
+git push -u origin main
