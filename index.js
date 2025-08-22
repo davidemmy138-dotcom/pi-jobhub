@@ -1,14 +1,17 @@
-
-// index.js
 const express = require("express");
+const path = require("path");
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// A simple test route
+// ✅ Serve static files from the root folder
+app.use(express.static(path.join(__dirname)));
+
+// Example route (you can keep your own existing ones)
 app.get("/", (req, res) => {
-  res.send("Hello from Job & Freelance Hub App! 🚀");
+  res.send("Welcome to Pi JobHub!");
 });
 
+// ✅ Make sure Render listens on the provided port
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
