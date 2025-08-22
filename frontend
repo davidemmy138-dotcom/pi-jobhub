@@ -1,0 +1,40 @@
+<button id="pay">Pay 1 Pi</button>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>
+  Pi.init({ version: "2.0" });
+
+  const BACKEND = "https://pi-jobhub-backend.onrender.com"; // <-- your Render URL
+
+  document.getElementById("pay").addEventListener("click", async () => {
+    try {
+      const payment = await Pi.createPayment(
+        {
+          amount: 1,                // try small amount first
+          memo: "Pi JobHub test",
+          metadata: { type: "test" }
+        },
+        {
+          onReadyForServerApproval: async (paymentId) => {
+            await fetch(`${BACKEND}/approve_payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentId }),
+            });
+          },
+          onReadyForServerCompletion: async (paymentId, txid) => {
+            await fetch(`${BACKEND}/complete_payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentId, txid }),
+            });
+          },
+          onCancel: (reason) => console.log("Payment cancelled:", reason),
+          onError: (error) => console.error("Payment error:", error),
+        }
+      );
+      console.log("Payment object:", payment);
+    } catch (e) {
+      console.error("createPayment failed:", e);
+    }
+  });
+</script>
