@@ -2,21 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pi Payment App</title>
   <script src="https://sdk.minepi.com/pi-sdk.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+    body { font-family: Arial; text-align: center; margin-top: 50px; }
     button { padding: 10px 20px; font-size: 16px; }
-    .status { margin: 20px; color: #555; }
   </style>
 </head>
 <body>
   <h1>💸 Pay with Pi</h1>
-  <p>Click below to send 1 Pi (sandbox mode)</p>
-  <button id="payButton" disabled>Initializing...</button>
-  <div class="status" id="status">Status: Ready</div>
+  <button id="payButton">Pay 1 Pi</button>
+  <div id="status">Status: Ready</div>
 
-  <script src="script.js"></script>
+  <script>
+    document.getElementById("payButton").onclick = async () => {
+      const paymentData = {
+        amount: 1,
+        memo: "Test payment"
+      };
+
+      const callbacks = {
+        onReadyForServerApproval: async (paymentId) => {
+          console.log("Approving:", paymentId);
+          fetch("/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId })
+          }).then(r => r.json()).then(d => console.log("Approved:", d));
+        },
+        onReadyForServerCompletion: async (paymentId, txid) => {
+          console.log("Completing:", txid);
+          fetch("/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId, txid })
+          }).then(r => r.json()).then(d => console.log("Completed:", d));
+        },
+        onCancel: () => { alert("Payment canceled"); },
+        onError: (err) => { alert("Error: " + err); }
+      };
+
+      await window.Pi.createPayment(paymentData, callbacks);
+    };
+  </script>
 </body>
 </html>
