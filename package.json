@@ -1,15 +1,4 @@
-{
-  "name": "pi-jobhub",
-  "version": "1.0.0",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "@pi-network/sdk": "^1.4.0"
-  },
-  "engines": {
-    "node": "18.x"
-  }
+"dependencies": {
+  "express": "^4.18.2",
+  "node-fetch": "^2.6.7"
 }
