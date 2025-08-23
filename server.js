@@ -16,6 +16,11 @@ app.use(express.static(path.join(__dirname, "public")));
 app.post("/approve", async (req, res) => {
   const { paymentId } = req.body;
 
+  // Validate input
+  if (!paymentId) {
+    return res.status(400).json({ error: "Missing paymentId" });
+  }
+
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/approve`, {
       method: "POST",
@@ -25,17 +30,33 @@ app.post("/approve", async (req, res) => {
       },
     });
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return res.status(response.status).json({
+        error: "Failed to approve payment",
+        details: errorData,
+      });
+    }
+
     const data = await response.json();
-    res.json(data);
+    return res.json(data);
   } catch (err) {
     console.error("Approve error:", err);
-    res.status(500).send("Error approving payment");
+    return res.status(500).json({ error: "Error approving payment", details: err.message });
   }
 });
 
 // Complete endpoint (Pi Network payment)
 app.post("/complete", async (req, res) => {
-  const { paymentId } = req.body;
+  const { paymentId, txid } = req.body;
+
+  // Validate required fields
+  if (!paymentId) {
+    return res.status(400).json({ error: "Missing paymentId" });
+  }
+  if (!txid) {
+    return res.status(400).json({ error: "Missing txid (transaction ID on blockchain)" });
+  }
 
   try {
     const response = await fetch(`https://api.minepi.com/v2/payments/${paymentId}/complete`, {
@@ -44,13 +65,22 @@ app.post("/complete", async (req, res) => {
         Authorization: `Key ${process.env.PI_API_KEY}`,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ txid }), // Required by Pi API to complete
     });
 
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return res.status(response.status).json({
+        error: "Failed to complete payment",
+        details: errorData,
+      });
+    }
+
     const data = await response.json();
-    res.json(data);
+    return res.json(data);
   } catch (err) {
     console.error("Complete error:", err);
-    res.status(500).send("Error completing payment");
+    return res.status(500).json({ error: "Error completing payment", details: err.message });
   }
 });
 
@@ -61,5 +91,5 @@ app.get("*", (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`✅ Server is running on port ${PORT}`);
 });
