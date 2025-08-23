@@ -1,92 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<<script src="https://sdk.minepi.com/pi-sdk.js"></script>
->
-  <meta charset="UTF-8">
-  <title>Pi JobHub</title>
-  <!-- Pi SDK -->
-  <script src="https://sdk.minepi.com/pi-sdk.js"></script>
-</head>
-<<button id="payWithPiBtn">Pay with Pi</button>
-<div id="result"></div>
->
-  <h1>Welcome to Pi JobHub</h1>
-  <p>A decentralized job marketplace powered by Pi Network.</p>
+// Initialize Pi SDK
+const scopes = ['username', 'payments'];
+Pi.init({ version: "2.0", sandbox: false });
 
-  <!-- Pay with Pi button -->
-  <button id="payWithPiBtn">💰 Pay with Pi</button>
-  <div id="result"></div>
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("payBtn");
+  if (btn) {
+    btn.addEventListener("click", payWithPi);
+  }
+});
 
-  <script>
-    // Initialize Pi SDK
-    Pi.init({ version: "2.0", sandbox: true }); // use sandbox:true for testing
-
-    // Handle button click
-    document.getElementById("payWithPiBtn").addEventListener("click", async () => {
-      try {
-        const paymentData = {
-          amount: 1, // test with 1 Pi
-          memo: "Test Payment for Pi JobHub",
-          metadata: { type: "job-listing" }
-        };
-
-        await Pi.createPayment(paymentData, {
-          onReadyForServerApproval: (paymentId) => {
-            console.log("Payment ID:", paymentId);
-            document.getElementById("result").innerText = "Ready for approval: " + paymentId;
-          },
-          onReadyForServerCompletion: (paymentId, txid) => {
-            console.log("Transaction completed:", txid);
-            document.getElementById("result").innerText = "Transaction completed: " + txid;
-          },
-          onCancel: () => {
-            document.getElementById("result").innerText = "Payment cancelled.";
-          },
-          onError: (error) => {
-            document.getElementById("result").innerText = "Error: " + error;
-          }
+// Payment function
+async function payWithPi() {
+  try {
+    const payment = await Pi.createPayment({
+      amount: 1, // test payment: 1 Pi
+      memo: "Test Transaction from Jobs & Freelance Hub",
+      metadata: { type: "test" }
+    }, {
+      onReadyForServerApproval: function (paymentId) {
+        console.log("✅ Ready for server approval:", paymentId);
+        fetch("/approve-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentId })
         });
-
-      } catch (err) {
-        console.error(err);
-        document.getElementById("result").innerText = "Payment failed: " + err.message;
+      },
+      onReadyForServerCompletion: function (paymentId, txid) {
+        console.log("✅ Ready for server completion:", paymentId, txid);
+        fetch("/complete-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ paymentId, txid })
+        });
+      },
+      onCancel: function (paymentId) {
+        console.log("❌ Payment cancelled:", paymentId);
+      },
+      onError: function (error, payment) {
+        console.error("⚠️ Payment error:", error, payment);
       }
     });
-  </script>
-<<script>
-  // Initialize Pi SDK with your App ID
-  Pi.init({ version: "2.0", sandbox: false }); // change sandbox:true for testing
-
-  document.getElementById("payWithPiBtn").addEventListener("click", async () => {
-    try {
-      const paymentData = {
-        amount: 1, // test with 1 Pi
-        memo: "Test Payment for Pi JobHub",
-        metadata: { type: "job-listing" }
-      };
-
-      await Pi.createPayment(paymentData, {
-        onReadyForServerApproval: (paymentId) => {
-          console.log("Payment ID:", paymentId);
-          document.getElementById("result").innerText = "Payment ready for approval: " + paymentId;
-        },
-        onReadyForServerCompletion: (paymentId, txid) => {
-          console.log("Transaction completed:", txid);
-          document.getElementById("result").innerText = "Transaction completed: " + txid;
-        },
-        onCancel: () => {
-          document.getElementById("result").innerText = "Payment cancelled.";
-        },
-        onError: (error) => {
-          document.getElementById("result").innerText = "Error: " + error;
-        }
-      });
-
-    } catch (err) {
-      console.error(err);
-      document.getElementById("result").innerText = "Payment failed: " + err.message;
-    }
-  });
-</script>
->
-</html>
+  } catch (err) {
+    console.error("⚠️ Error in payment:", err);
+  }
+}
