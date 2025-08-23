@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi Network Transaction Implementation Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #2b70c5;
+            --secondary: #1a3e6a;
+            --accent: #f8b017;
+            --light: #f5f9ff;
+            --dark: #1a3e6a;
+            --success: #2ecc71;
+            --code-bg: #2d2d2d;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        
+        .logo i {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            color: var(--accent);
+        }
+        
+        .logo h1 {
+            font-size: 2.2rem;
+        }
+        
+        .tabs {
+            display: flex;
+            background: #e8f1ff;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab {
+            padding: 15px 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom: 3px solid var(--primary);
+            background: white;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .instructions {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .instructions ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+        }
+        
+        .code-block {
+            background: var(--code-bg);
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .code-comment {
+            color: #75715e;
+        }
+        
+        .code-keyword {
+            color: #f92672;
+        }
+        
+        .code-function {
+            color: #a6e22e;
+        }
+        
+        .code-string {
+            color: #e6db74;
+        }
+        
+        .code-number {
+            color: #ae81ff;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 5px;
+        }
+        
+        .btn i {
+            margin-right: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--secondary);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .payment-form {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+            margin: 20px 0;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(43, 112, 197, 0.1);
+        }
+        
+        .transaction-result {
+            display: none;
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            text-align: center;
+        }
+        
+        .transaction-result.success {
+            display: block;
+        }
+        
+        .result-icon {
+            font-size: 3rem;
+            color: var(--success);
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: var(--light);
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-bottom: 1px solid #ddd;
+                border-left: 3px solid transparent;
+            }
+            
+            .tab.active {
+                border-left: 3px solid var(--primary);
+                border-bottom: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fab fa-google-wallet"></i>
+                <h1>Pi Network Transaction Implementation</h1>
+            </div>
+            <p>Complete guide to implementing Pi payments in your application</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="frontend">Frontend Implementation</div>
+            <div class="tab" data-tab="backend">Backend Implementation</div>
+            <div class="tab" data-tab="testing">Testing & Debugging</div>
+        </div>
+        
+        <div class="tab-content active" id="frontend">
+            <div class="section">
+                <h3 class="section-title">Frontend Implementation</h3>
+                
+                <div class="instructions">
+                    <p>To implement Pi payments in your frontend, you need to:</p>
+                    <ol>
+                        <li>Include the Pi SDK in your HTML</li>
+                        <li>Initialize the Pi SDK with your app credentials</li>
+                        <li>Create a payment function</li>
+                        <li>Handle the payment callback</li>
+                    </ol>
+                </div>
+                
+                <div class="code-block">
+                    <span class="code-comment">&lt;!-- Include Pi SDK in your HTML --&gt;</span><br>
+                    &lt;script src="https://sdk.minepi.com/pi-sdk.js"&gt;&lt;/script&gt;<br><br>
+                    
+                    <span class="code-comment">&lt;script&gt;</span><br>
+                    <span class="code-comment">// Initialize the Pi SDK</span><br>
+                    const pi = new Pi({<br>
+                    &nbsp;&nbsp;version: "<span class="code-string">2.0</span>",<br>
+                    &nbsp;&nbsp;sandbox: <span class="code-keyword">true</span> <span class="code-comment">// Set to false for production</span><br>
+                    });<br><br>
+                    
+                    <span class="code-comment">// Create a payment function</span><br>
+                    <span class="code-keyword">async function</span> <span class="code-function">createPayment</span>(amount, memo) {<br>
+                    &nbsp;&nbsp;const paymentData = {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;amount: amount,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;memo: memo,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;metadata: {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;productId: "<span class="code-string">demo_product</span>"<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;};<br><br>
+                    &nbsp;&nbsp;try {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;const payment = <span class="code-keyword">await</span> pi.createPayment(paymentData);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">await</span> pi.waitForPayment(payment.identifier);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.log(<span class="code-string">"Payment completed:"</span>, payment);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span> payment;<br>
+                    &nbsp;&nbsp;} <span class="code-keyword">catch</span> (error) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.error(<span class="code-string">"Payment error:"</span>, error);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">throw</span> error;<br>
+                    &nbsp;&nbsp;}<br>
+                    }<br>
+                    <span class="code-comment">&lt;/script&gt;</span>
+                </div>
+                
+                <div class="payment-form">
+                    <h4>Test Payment Interface</h4>
+                    <div class="form-group">
+                        <label for="amount">Payment Amount (π)</label>
+                        <input type="number" id="amount" class="form-control" value="3.14" step="0.1" min="0.1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="memo">Payment Memo</label>
+                        <input type="text" id="memo" class="form-control" value="Test transaction for Pi app">
+                    </div>
+                    
+                    <button id="process-payment" class="btn btn-primary">
+                        <i class="fas fa-money-bill-wave"></i> Process Payment
+                    </button>
+                    
+                    <div id="transaction-result" class="transaction-result">
+                        <div class="result-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h3>Transaction Successful!</h3>
+                        <p>Your payment of <strong><span id="success-amount">3.14</span> π</strong> has been processed successfully.</p>
+                        <p>Check the console for payment details.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="backend">
+            <div class="section">
+                <h3 class="section-title">Backend Implementation (Node.js)</h3>
+                
+                <div class="instructions">
+                    <p>Your backend needs to:</p>
+                    <ol>
+                        <li>Validate incoming payments</li>
+                        <li>Verify payment authenticity with Pi Servers</li>
+                        <li>Complete the payment process</li>
+                        <li>Handle webhooks from Pi Network</li>
+                    </ol>
+                </div>
+                
+                <div class="code-block">
+                    <span class="code-comment">// server.js - Basic Pi payment handler</span><br>
+                    <span class="code-keyword">const</span> express = <span class="code-function">require</span>('<span class="code-string">express</span>');<br>
+                    <span class="code-keyword">const</span> axios = <span class="code-function">require</span>('<span class="code-string">axios</span>');<br>
+                    <span class="code-keyword">const</span> app = <span class="code-function">express</span>();<br><br>
+                    
+                    app.<span class="code-function">use</span>(express.<span class="code-function">json</span>());<br><br>
+                    
+                    <span class="code-comment">// Endpoint to handle completed payments</span><br>
+                    app.<span class="code-function">post</span>('<span class="code-string">/payments/complete</span>', <span class="code-keyword">async</span> (req, res) => {<br>
+                    &nbsp;&nbsp;try {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> { paymentId } = req.body;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// Verify payment with Pi Server</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> response = <span class="code-keyword">await</span> axios.<span class="code-function">get</span>(<span class="code-string">`https://api.minepi.com/v2/payments/</span>${paymentId}<span class="code-string">`</span>, {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;headers: {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Authorization: <span class="code-string">`Key </span>${process.env.PI_API_KEY}<span class="code-string">`</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> payment = response.data;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// Check if payment is completed</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">if</span> (payment.status === <span class="code-string">'completed'</span>) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="code-comment">// Fulfill the order</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">log</span>(<span class="code-string">'Payment completed:'</span>, payment);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res.<span class="code-function">json</span>({ success: <span class="code-keyword">true</span>, payment });<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;} <span class="code-keyword">else</span> {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;res.<span class="code-function">status</span>(400).<span class="code-function">json</span>({ error: <span class="code-string">'Payment not completed'</span> });<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+                    &nbsp;&nbsp;} <span class="code-keyword">catch</span> (error) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.<span class="code-function">error</span>(<span class="code-string">'Payment verification error:'</span>, error);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;res.<span class="code-function">status</span>(500).<span class="code-function">json</span>({ error: <span class="code-string">'Payment verification failed'</span> });<br>
+                    &nbsp;&nbsp;}<br>
+                    });<br><br>
+                    
+                    <span class="code-comment">// Start server</span><br>
+                    <span class="code-keyword">const</span> PORT = process.env.PORT || <span class="code-number">3000</span>;<br>
+                    app.<span class="code-function">listen</span>(PORT, () => {<br>
+                    &nbsp;&nbsp;console.<span class="code-function">log</span>(<span class="code-string">`Server running on port </span>${PORT}<span class="code-string">`</span>);<br>
+                    });
+                </div>
+                
+                <div class="code-block">
+                    <span class="code-comment">// package.json - Dependencies</span><br>
+                    {<br>
+                    &nbsp;&nbsp;"<span class="code-string">name</span>": "<span class="code-string">pi-app-backend</span>",<br>
+                    &nbsp;&nbsp;"<span class="code-string">version</span>": "<span class="code-string">1.0.0</span>",<br>
+                    &nbsp;&nbsp;"<span class="code-string">dependencies</span>": {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;"<span class="code-string">express</span>": "<span class="code-string">^4.18.2</span>",<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;"<span class="code-string">axios</span>": "<span class="code-string">^1.4.0</span>"<br>
+                    &nbsp;&nbsp;}<br>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="testing">
+            <div class="section">
+                <h3 class="section-title">Testing & Debugging</h3>
+                
+                <div class="instructions">
+                    <p>To test your Pi application:</p>
+                    <ol>
+                        <li>Use the Pi Testnet for development</li>
+                        <li>Test with the Pi Browser app</li>
+                        <li>Check console logs for errors</li>
+                        <li>Verify payment callbacks are working</li>
+                        <li>Test on different devices</li>
+                    </ol>
+                </div>
+                
+                <div class="code-block">
+                    <span class="code-comment">// Example test script</span><br>
+                    <span class="code-keyword">const</span> Pi = <span class="code-function">require</span>('<span class="code-string">pi-backend-sdk</span>');<br><br>
+                    
+                    <span class="code-comment">// Initialize with testnet</span><br>
+                    <span class="code-keyword">const</span> pi = <span class="code-keyword">new</span> <span class="code-function">Pi</span>({<br>
+                    &nbsp;&nbsp;apiKey: process.env.PI_API_KEY,<br>
+                    &nbsp;&nbsp;baseURL: '<span class="code-string">https://api.testnet.minepi.com</span>' <span class="code-comment">// Testnet URL</span><br>
+                    });<br><br>
+                    
+                    <span class="code-comment">// Test payment creation</span><br>
+                    <span class="code-keyword">async function</span> <span class="code-function">testPayment</span>() {<br>
+                    &nbsp;&nbsp;try {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">const</span> payment = <span class="code-keyword">await</span> pi.createPayment({<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;amount: <span class="code-number">1</span>,<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;memo: '<span class="code-string">Test payment</span>',<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;metadata: { productId: '<span class="code-string">test</span>' }<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;});<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.log('<span class="code-string">Test payment created:</span>', payment);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">return</span> payment;<br>
+                    &nbsp;&nbsp;} <span class="code-keyword">catch</span> (error) {<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;console.error('<span class="code-string">Test payment failed:</span>', error);<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">throw</span> error;<br>
+                    &nbsp;&nbsp;}<br>
+                    }<br><br>
+                    
+                    <span class="code-function">testPayment</span>();
+                </div>
+                
+                <div class="instructions">
+                    <h4>Common Issues & Solutions</h4>
+                    <ul>
+                        <li><strong>CORS errors:</strong> Ensure your server allows requests from your Pi app domain</li>
+                        <li><strong>Authentication failures:</strong> Verify your API key and app credentials</li>
+                        <li><strong>Payment not completing:</strong> Check that you're calling the completePayment method</li>
+                        <li><strong>Network issues:</strong> Test with different network connections</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Pi Network App Development Guide - &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // Update active tab
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show active content
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // Payment simulation
+            const processBtn = document.getElementById('process-payment');
+            const transactionResult = document.getElementById('transaction-result');
+            const amountInput = document.getElementById('amount');
+            const successAmount = document.getElementById('success-amount');
+            
+            processBtn.addEventListener('click', function() {
+                const amount = amountInput.value;
+                
+                // Show processing state
+                processBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                processBtn.disabled = true;
+                
+                // Simulate API call to Pi Network
+                setTimeout(function() {
+                    // Update success amount
+                    successAmount.textContent = amount;
+                    
+                    // Show success message
+                    transactionResult.classList.add('success');
+                    
+                    // Reset button
+                    processBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Process Payment';
+                    processBtn.disabled = false;
+                    
+                    // Log to console
+                    console.log('Payment simulation completed:');
+                    console.log('Amount: ' + amount + 'π');
+                    console.log('Memo: ' + document.getElementById('memo').value);
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
